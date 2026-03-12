@@ -1,0 +1,126 @@
+package com.saas.apkeditorplus
+
+import android.content.Intent
+import android.os.Bundle
+import android.os.Environment
+import android.view.View
+import android.widget.AdapterView
+import android.widget.EditText
+import android.widget.ListView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import java.io.File
+
+class FileListActivity : BaseActivity(), View.OnClickListener, AdapterView.OnItemClickListener {
+
+    private lateinit var dirPathText: TextView
+    private lateinit var listView: ListView
+    private lateinit var adapter: FileAdapter
+    private var currentPath: String = Environment.getExternalStorageDirectory().path
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_listfile)
+
+        // Inicializa as views
+        dirPathText = findViewById(R.id.dirPath)
+        listView = findViewById(R.id.file_list)
+        
+        // Configura o adaptador
+        val initialDir = File(currentPath)
+        adapter = FileAdapter(this, initialDir)
+        listView.adapter = adapter
+        listView.onItemClickListener = this
+
+        // Configura os botões
+        findViewById<View>(R.id.btn_close).setOnClickListener(this)
+        findViewById<View>(R.id.menu_switch_card).setOnClickListener(this)
+        findViewById<View>(R.id.menu_home).setOnClickListener(this)
+        findViewById<View>(R.id.files_list).setOnClickListener(this)
+        findViewById<View>(R.id.search_button).setOnClickListener(this)
+
+        updatePathDisplay(initialDir.path)
+    }
+
+    private fun updatePathDisplay(path: String) {
+        dirPathText.text = path
+        currentPath = path
+    }
+
+    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        val selectedFile = adapter.getItem(position) as File
+        
+        if (selectedFile.isDirectory) {
+            if (selectedFile.name == "..") {
+                // Sobe um nível
+                val parentDir = adapter.getCurrentDir().parentFile
+                if (parentDir != null) {
+                    adapter.setDir(parentDir.path)
+                    updatePathDisplay(parentDir.path)
+                }
+            } else {
+                // Entra na pasta
+                adapter.setDir(selectedFile.path)
+                updatePathDisplay(selectedFile.path)
+            }
+        } else if (selectedFile.name.endsWith(".apk", true)) {
+            // Mostra o diálogo de modo de edição
+            showEditModeDialog(selectedFile.path)
+        } else {
+            Toast.makeText(this, "Selecione um arquivo APK", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showEditModeDialog(path: String) {
+        val dialog = EditModeDialog(this, path) { mode, apkPath ->
+            startEditActivity(mode, apkPath)
+        }
+        dialog.show()
+    }
+
+    private fun startEditActivity(mode: Int, path: String) {
+        val intent = when (mode) {
+            0 -> Intent(this, UserAppActivity::class.java) // Na versão original, 0 parece ser Full Edit ou algo do tipo
+            1 -> Intent(this, SimpleEditActivity::class.java)
+            2 -> Intent(this, CommonEditActivity::class.java)
+            4 -> Intent(this, AxmlEditActivity::class.java)
+            else -> null
+        }
+
+        intent?.let {
+            it.putExtra("apkPath", path)
+            startActivity(it)
+        } ?: Toast.makeText(this, "Modo de edição não suportado ainda", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onClick(v: View) {
+        when (v.id) {
+            R.id.btn_close -> finish()
+            R.id.menu_switch_card -> {
+                // Alternar entre armazenamento interno e SD se possível
+                Toast.makeText(this, "Alternar armazenamento não implementado", Toast.LENGTH_SHORT).show()
+            }
+            R.id.menu_home -> {
+                val homePath = Environment.getExternalStorageDirectory().path
+                adapter.setDir(homePath)
+                updatePathDisplay(homePath)
+            }
+            R.id.files_list -> {
+                // Talvez mostrar lista de arquivos recentes ou favoritos
+                Toast.makeText(this, "Arquivos recentes não implementado", Toast.LENGTH_SHORT).show()
+            }
+            R.id.search_button -> {
+                val keyword = findViewById<EditText>(R.id.keyword_edit).text.toString()
+                if (keyword.isNotEmpty()) {
+                    val intent = Intent(this, ApkSearchActivity::class.java)
+                    intent.putExtra("Keyword", keyword)
+                    intent.putExtra("Path", currentPath)
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "Digite uma palavra-chave para buscar", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+}

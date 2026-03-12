@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" android:minSdkVersion="30"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:largeHeap="true"
+        android:requestLegacyExternalStorage="true"
+        android:theme="@style/MD.Dark.NoActionBar">
+        
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/MD.Dark.NoActionBar"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ApkInfoActivity" />
+        <activity android:name=".ApkInfoExActivity" android:exported="true" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".SimpleEditActivity" />
+        <activity android:name=".CommonEditActivity" />
+        <activity android:name=".ApkCreateActivity" />
+        <activity android:name=".ViewZipImageActivity" />
+        <activity android:name=".ApkComposeActivity" android:launchMode="singleTask"/>
+        <activity android:name=".FileListActivity" />
+        <activity android:name=".UserAppActivity" />
+        <activity android:name=".SettingActivity" />
+        <activity android:name=".SettingEditorActivity" />
+        <activity android:name=".SettingHideActivity" />
+        <activity android:name=".TextEditNormalActivity" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".TextEditBigActivity" android:windowSoftInputMode="adjustPan"/>
+        <activity android:name=".MfSearchRetActivity" android:windowSoftInputMode="stateHidden"/>
+        <activity android:name=".ApkSearchActivity" />
+        <activity android:name=".ColorXmlActivity" />
+        <activity android:name=".ProjectListActivity" />
+        <activity android:name=".AxmlEditActivity" />
+        <activity android:name=".OdexPatchActivity" />
+        <activity android:name=".PngEditActivity" />
+        <activity android:name=".InfoActivity" />
+        <activity android:name=".AboutModActivity" />
+        <activity android:name=".TemplatesActivity" />
+        <activity android:name=".PrefOverallActivity" />
+        <activity android:name=".PrefDetailActivity" />
+        <activity android:name=".EditorActivity" />
+        <activity android:name=".SqliteTableListActivity" />
+        <activity android:name=".SqliteTableViewActivity" />
+        <activity android:name=".SqliteRowViewActivity" />
+        <activity android:name=".SelectDbActivity" />
+        <activity android:name=".VerifyActivity" />
+        <activity android:name=".SelectFileActivity" />
+        <activity android:name=".SigningProgressActivity" />
+        <activity android:name=".KeyStoreListActivity" />
+    </application>
+
+</manifest>
