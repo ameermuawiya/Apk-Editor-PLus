@@ -26,17 +26,38 @@ class AxmlEditActivity : BaseActivity() {
         apkPath = intent.getStringExtra("apkPath") ?: ""
         if (apkPath.isEmpty()) {
             finish()
-            return
         }
 
         listView = findViewById(R.id.files_list)
         progressBar = findViewById(R.id.progress_bar)
-        findViewById<TextView>(R.id.tv_filepath).text = apkPath
-
+        
+        loadApkInfo()
         loadXmlFiles()
 
         findViewById<Button>(R.id.btn_close).setOnClickListener { finish() }
         findViewById<Button>(R.id.btn_save).setOnClickListener { startApkCreate() }
+    }
+
+    private fun loadApkInfo() {
+        try {
+            val pm = packageManager
+            val info = pm.getPackageArchiveInfo(apkPath, 0)
+            if (info != null) {
+                info.applicationInfo?.let { appInfo ->
+                    appInfo.sourceDir = apkPath
+                    appInfo.publicSourceDir = apkPath
+                    val label = appInfo.loadLabel(pm).toString()
+                    val icon = appInfo.loadIcon(pm)
+                    
+                    findViewById<TextView>(R.id.apk_label).text = label
+                    findViewById<ImageView>(R.id.apk_icon).setImageDrawable(icon)
+                    findViewById<TextView>(R.id.tv_filepath).text = apkPath
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            findViewById<TextView>(R.id.tv_filepath).text = apkPath
+        }
     }
 
     private fun loadXmlFiles() {
@@ -45,12 +66,14 @@ class AxmlEditActivity : BaseActivity() {
             try {
                 val zipFile = ZipFile(apkPath)
                 val entries = zipFile.entries()
+                xmlFiles.clear()
                 while (entries.hasMoreElements()) {
                     val entry = entries.nextElement()
-                    if (entry.name.endsWith(".xml")) {
+                    if (entry.name.endsWith(".xml") && !entry.isDirectory) {
                         xmlFiles.add(entry.name)
                     }
                 }
+                xmlFiles.sort()
                 zipFile.close()
                 runOnUiThread {
                     updateList()
@@ -74,10 +97,15 @@ class AxmlEditActivity : BaseActivity() {
 
             override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
                 val view = convertView ?: LayoutInflater.from(this@AxmlEditActivity)
-                    .inflate(android.R.layout.simple_list_item_1, parent, false)
-                val textView = view.findViewById<TextView>(android.R.id.text1)
+                    .inflate(R.layout.item_zipfile, parent, false)
+                
+                val textView = view.findViewById<TextView>(R.id.filename)
+                val iconView = view.findViewById<ImageView>(R.id.file_icon)
+                
                 textView.text = xmlFiles[position]
-                textView.setOnClickListener {
+                iconView.setImageResource(R.drawable.ic_file_xml)
+                
+                view.setOnClickListener {
                     openXmlFile(xmlFiles[position])
                 }
                 return view
@@ -99,7 +127,7 @@ class AxmlEditActivity : BaseActivity() {
                 
                 val outputStream = FileOutputStream(tempFile)
                 
-                // Tenta decodificar como AXML, se falhar ou não for, tenta ler como texto
+                // Tenta decodificar como AXML
                 val decoder = AxmlDecoder()
                 val success = decoder.decode(inputStream, outputStream)
                 
@@ -113,7 +141,6 @@ class AxmlEditActivity : BaseActivity() {
                         intent.putExtra("fileName", entryName)
                         startActivityForResult(intent, 100)
                         
-                        // Armazena que este arquivo foi aberto para edição
                         modifiedFiles[entryName] = tempFile.absolutePath
                     } else {
                         Toast.makeText(this, "Falha ao decodificar arquivo", Toast.LENGTH_SHORT).show()
@@ -139,12 +166,12 @@ class AxmlEditActivity : BaseActivity() {
     private fun startApkCreate() {
         val intent = Intent(this, ApkCreateActivity::class.java)
         intent.putExtra("apkPath", apkPath)
-        // Passa os arquivos modificados para a próxima tela
         val bundle = Bundle()
         for ((key, value) in modifiedFiles) {
             bundle.putString(key, value)
         }
         intent.putExtra("modifiedFiles", bundle)
         startActivity(intent)
+        finish()
     }
 }
