@@ -1,13 +1,26 @@
 package com.saas.apkeditorplus
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.view.View
+import android.widget.ListView
+import android.widget.ProgressBar
+import android.widget.Toast
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
 
 class InfoActivity : BaseActivity() {
+
+    private lateinit var adapter: CommitAdapter
+    private lateinit var pbLoading: ProgressBar
+    private val executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     override fun shouldHideActionBar(): Boolean = false
 
@@ -17,9 +30,54 @@ class InfoActivity : BaseActivity() {
         
         setupToolbar()
 
-        findViewById<View>(R.id.dev_github_link)?.setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/FabioSilva11/"))
-            startActivity(intent)
+        initializeCommitsList()
+        fetchCommits()
+    }
+
+    private fun initializeCommitsList() {
+        val listView = findViewById<ListView>(R.id.lv_commits)
+        pbLoading = findViewById(R.id.pb_loading)
+        adapter = CommitAdapter(this)
+        listView.adapter = adapter
+    }
+
+    private fun fetchCommits() {
+        pbLoading.visibility = View.VISIBLE
+        
+        executor.execute {
+            try {
+                val url = URL("https://api.github.com/repos/FabioSilva11/Apk-Editor-PLus/commits?per_page=10")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                if (connection.responseCode == 200) {
+                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                    val response = reader.readText()
+                    reader.close()
+
+                    val listType = object : TypeToken<List<GitHubCommit>>() {}.type
+                    val commits: List<GitHubCommit> = Gson().fromJson(response, listType)
+
+                    mainHandler.post {
+                        pbLoading.visibility = View.GONE
+                        adapter.setCommits(commits)
+                    }
+                } else {
+                    mainHandler.post {
+                        pbLoading.visibility = View.GONE
+                        Toast.makeText(this, "Erro ao carregar commits: ${connection.responseCode}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                mainHandler.post {
+                    pbLoading.visibility = View.GONE
+                    Toast.makeText(this, "Erro de conexão", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
